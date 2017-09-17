@@ -1,0 +1,40 @@
+{{template "header"}}
+<div class="conteiner" style="padding: 65px 50px 0px 50px;">
+  <div class="row justify-content-center">
+    {{ range .Art}}
+    <div class="col-md-10">
+      <h4>{{ .Title }}</h4>
+      <em>{{ .Source }}</em>
+      <br>
+      <div class="row">
+        <div class="col-md-9 text-truncate text-justify">
+          {{ .Text }}
+        </div>
+      </div>
+      <br>
+      <div class="row">
+        <div class="col-12 col-xs-12 col-sm-8 col-md-8 justify-content-start" style="padding:5px">
+          <a href="#" class="btn btn-secondary" onclick="window.open('{{ .Link }}')">Перейти на сайт</a>
+        </div>
+        <div class="col-12 col-xs-12 col-sm-4 col-md-4 justify-content-end" style="padding:5px">
+          <div class="btn-group" role="group">
+            <a href="/ratelike/{{ .Id.Hex }}" class="btn btn-success">Нравиться</a>
+            <a href="/ratedislike/{{ .Id.Hex }}" class="btn btn-danger">Ненравиться</a>
+          </div>
+        </div>
+      </div>
+      <hr>
+    </div>
+    {{ end }}
+  </div>
+  <nav>
+    <ul class="pagination">
+      <!-- <li class="page-item"><a class="page-link" href="#">Previous</a></li> -->
+      {{ range .Pages}}
+      <li class="page-item"><a class="page-link" href="/feed/{{ . }}">{{ . }}</a></li>
+      {{ end }}
+      <!-- <li class="page-item"><a class="page-link" href="#">Next</a></li> -->
+    </ul>
+  </nav>
+</div>
+{{ template "footer"}}

@@ -1,0 +1,62 @@
+version: '2'
+
+services:
+    front-end:
+        build:
+            context: ./frontEnd
+        depends_on:
+            - mongo
+            - server
+        ports:
+            - 9000:9000
+
+    article-server:
+        build:
+            context: ./articaleServer
+        depends_on:
+            - "mongo"
+            - "rabbitmq"
+            
+    butler1:
+        build:
+            context: ./butler
+        depends_on:
+            - "mongo"
+            - "rabbitmq"
+            - "article-server"
+    butler2:
+        build:
+            context: ./butler
+        depends_on:
+            - "mongo"
+            - "rabbitmq"
+            - "article-server"
+    butler3:
+        build:
+            context: ./butler
+        depends_on:
+            - "mongo"
+            - "rabbitmq"
+            - "article-server"
+        
+    server:
+        build:
+            context: ./server
+        depends_on:
+            - mongo
+        ports:
+            - 12345:12345
+
+    rabbitmq:
+        image: rabbitmq:3.6.12-management
+        ports:
+            - 5672:5672
+            - 15672:15672
+
+    mongo:
+        image: mongo:3.4.7
+        volumes:
+            - ./data/db:/data/db
+        ports:
+            - 27017:27017
+        command: mongod

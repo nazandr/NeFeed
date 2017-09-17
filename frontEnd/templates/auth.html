@@ -1,0 +1,55 @@
+{{template "header"}}
+
+<script type="text/javascript">
+  $(document).ready(function () {
+    $('#check').click(function () {
+      checked = $("input[type=checkbox]:checked").length;
+
+      if (!checked) {
+        alert("Выберите хотябы одну тему");
+        return false;
+      }
+
+    });
+  });
+
+</script>
+<div class="conteiner" style="padding: 65px 50px 0px 50px;">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-6 col-xl-6">
+      <form action="/login" action="POST" class="form-signin">
+        <h2 class="form-signin-heading">Войти</h2>
+        <label for="inputEmail" class="sr-only">Email address</label>
+        <input name="email" type="email" id="inputEmail" class="form-control" placeholder="Email address" required autofocus>
+        <br>
+        <label for="inputPassword" class="sr-only">Password</label>
+        <input name="password" type="password" id="inputPassword" class="form-control" placeholder="Password" required>
+        <br>
+        <button class="btn btn-md btn-success btn-block" type="submit">Sign in</button>
+      </form>
+      <br>
+    </div>
+    <div class="col-12 col-lg-6 col-xl-6">
+      <form action="/registration" method="PUT">
+        <h2>Или зарегестрироваться</h2>
+        <label for="inputEmail" class="sr-only">Email address</label>
+        <input name="email" type="email" class="form-control" placeholder="Email address" required autofocus>
+        <br>
+        <label for="inputPassword" class="sr-only">Password</label>
+        <input name="password" type="password" class="form-control" placeholder="Password" required>
+        </br>
+        <h2>Выберите темы которые интересуют</h2>
+        {{range .Tags}}
+        <div class="form-check">
+          <label class="form-check-label">
+                              <input class="form-check-input" type="checkbox" name="tags" value="{{ .Value }}"> {{ .Name }}
+                            </label>
+        </div>
+        {{end}}
+        <button class="btn btn-md btn-success btn-block" type="submit" id="check">Отправить</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{{template "footer"}}
