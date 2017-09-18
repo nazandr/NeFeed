@@ -59,7 +59,7 @@ func main() {
 	router.HandleFunc("/feed/{page:[0-9]+}", feed)
 	router.HandleFunc("/ratelike/{id}", like)
 	router.HandleFunc("/ratedislike/{id}", dislike)
-	http.ListenAndServe(":8080", router)
+	http.ListenAndServe(":9000", router)
 }
 func mainPage(w http.ResponseWriter, req *http.Request) {
 	t := template.Must(template.ParseFiles(
