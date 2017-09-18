@@ -55,6 +55,7 @@ func main() {
 	router.HandleFunc("/", mainPage)
 	router.HandleFunc("/auth", auth)
 	router.HandleFunc("/login", login)
+	router.HandleFunc("/logout", logout)
 	router.HandleFunc("/registration", reg)
 	router.HandleFunc("/feed/{page:[0-9]+}", feed)
 	router.HandleFunc("/ratelike/{id}", like)
@@ -67,7 +68,21 @@ func mainPage(w http.ResponseWriter, req *http.Request) {
 		"./templates/header.html",
 		"./templates/footer.html",
 	))
-	err := t.Execute(w, nil)
+	token, err := req.Cookie("auth")
+	var a bool
+	if (err != nil) || (token.Value == "") {
+		a = false
+	} else {
+		a = true
+	}
+	data := struct {
+		Title string
+		Auth  bool
+	}{
+		"NeFeed",
+		a,
+	}
+	err = t.Execute(w, data)
 	if err != nil {
 		log.Println(err)
 	}
@@ -127,7 +142,7 @@ func feed(w http.ResponseWriter, req *http.Request) {
 	token, err := req.Cookie("auth")
 	if err != nil {
 		log.Println(err)
-		http.Redirect(w, req, "/", 302)
+		http.Redirect(w, req, "/auth", 302)
 	}
 	page := mux.Vars(req)
 
@@ -163,7 +178,7 @@ func feed(w http.ResponseWriter, req *http.Request) {
 			"./templates/header.html",
 			"./templates/footer.html",
 		))
-		nPages, err := strconv.Atoi(strings.TrimSpace(resp.Header.Get("npage")))
+		nPages, err := strconv.Atoi(resp.Header.Get("npage"))
 		if err != nil {
 			log.Println("str to int err: ", err)
 			http.Redirect(w, req, "/", 302)
@@ -250,4 +265,10 @@ func login(w http.ResponseWriter, req *http.Request) {
 	http.SetCookie(w, &cookie)
 	defer resp.Body.Close()
 	http.Redirect(w, req, "/feed/0", 302)
+}
+
+func logout(w http.ResponseWriter, req *http.Request) {
+	cookie := http.Cookie{Name: "auth", Value: "", Expires: time.Now()}
+	http.SetCookie(w, &cookie)
+	http.Redirect(w, req, "/", 302)
 }
