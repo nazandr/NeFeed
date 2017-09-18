@@ -1,4 +1,4 @@
-{{template "header"}}
+{{template "header" . }}
 <div class="conteiner" style="padding: 65px 50px 0px 50px;">
   <div class="row justify-content-center">
     {{ range .Art}}
@@ -37,4 +37,4 @@
     </ul>
   </nav>
 </div>
-{{ template "footer"}}
+{{ template "footer" . }}

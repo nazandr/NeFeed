@@ -37,6 +37,15 @@ type Article struct {
 	Timestamp  time.Time       `bson:"timestamp"`
 }
 
+type UserPublic struct {
+	Id          bson.ObjectId   `bson:"_id,omitempty"`
+	Email       string          `bson:"email"`
+	Tags        []string        `bson:"tags"`
+	Feed        []bson.ObjectId `bson:"feed"`
+	LikeNews    []bson.ObjectId `bson:"likeNews"`
+	DislikeNews []bson.ObjectId `bson:"dislikeNews"`
+}
+
 var (
 	tags []TagJSON
 	T    Tags
@@ -187,14 +196,26 @@ func feed(w http.ResponseWriter, req *http.Request) {
 		for i := 0; i <= nPages; i++ {
 			pages = append(pages, i)
 		}
-		a := struct {
+		token, err := req.Cookie("auth")
+		var a bool
+		if (err != nil) || (token.Value == "") {
+			a = false
+		} else {
+			a = true
+		}
+
+		data := struct {
 			Art   []Article
 			Pages []int
+			Title string
+			Auth  bool
 		}{
 			articles,
 			pages,
+			"Список новостей",
+			a,
 		}
-		err = t.Execute(w, a)
+		err = t.Execute(w, data)
 		if err != nil {
 			log.Printf("template %v\n", err)
 			http.Redirect(w, req, "/", 302)
@@ -209,14 +230,23 @@ func auth(w http.ResponseWriter, req *http.Request) {
 		"./templates/header.html",
 		"./templates/footer.html",
 	))
-	h := struct {
+	token, err := req.Cookie("auth")
+	var a bool
+	if (err != nil) || (token.Value == "") {
+		a = false
+	} else {
+		a = true
+	}
+	data := struct {
 		Title string
 		Tags  []Tag
+		Auth  bool
 	}{
-		Title: "Sing in",
-		Tags:  T.Tags,
+		"Авторизация",
+		T.Tags,
+		a,
 	}
-	err := t.Execute(w, h)
+	err = t.Execute(w, data)
 	if err != nil {
 		log.Println(err)
 	}

@@ -25,6 +25,15 @@ type User struct {
 	DislikeNews []bson.ObjectId `bson:"dislikeNews"`
 }
 
+type UserPublic struct {
+	Id          bson.ObjectId   `bson:"_id,omitempty"`
+	Email       string          `bson:"email"`
+	Tags        []string        `bson:"tags"`
+	Feed        []bson.ObjectId `bson:"feed"`
+	LikeNews    []bson.ObjectId `bson:"likeNews"`
+	DislikeNews []bson.ObjectId `bson:"dislikeNews"`
+}
+
 type Article struct {
 	Id         bson.ObjectId   `bson:"_id,omitempty"`
 	Title      string          `bson:"title"`
@@ -110,6 +119,8 @@ func main() {
 	router.Handle("/ratelike/{id}", restrictedHandler(rateLike)).Methods("POST")
 	router.Handle("ratedislike/{id}", restrictedHandler(rateDislike)).Methods("POST")
 	router.HandleFunc("/feed/{page:[0-9]+}", restrictedHandler(feed)).Methods("GET")
+	router.HandleFunc("/account", restrictedHandler(accountData)).Methods("GET")
+	router.HandleFunc("/account/chenge/tags", restrictedHandler(accountTagsChenge)).Methods("GET")
 	log.Fatal(http.ListenAndServe(":12345", router))
 	// err = http.ListenAndServeTLS(":12345", "./keys/server.crt", "./keys/server.key", http.Handler(router))
 
@@ -364,6 +375,47 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	w.Write(response)
+}
+
+func accountData(w http.ResponseWriter, req *http.Request) {
+	tokenHeader := req.Header.Get("auth")
+	ds := NewDataStore()
+	defer ds.Close()
+	c := ds.C("Users")
+
+	token, _ := jwt.ParseWithClaims(tokenHeader, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		return verifyKey, nil
+	})
+	var user UserPublic
+	err := c.Find(bson.M{"email": token.Claims.(*Claims).Email}).One(&user)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Can't find user")
+		return
+	}
+	respondWithJSON(w, http.StatusOK, user)
+}
+
+func accountTagsChenge(w http.ResponseWriter, req *http.Request) {
+	tokenHeader := req.Header.Get("auth")
+	ds := NewDataStore()
+	defer ds.Close()
+	c := ds.C("Users")
+
+	token, _ := jwt.ParseWithClaims(tokenHeader, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		return verifyKey, nil
+	})
+	var user UserPublic
+	err := c.Find(bson.M{"email": token.Claims.(*Claims).Email}).One(&user)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Can't find user")
+		return
+	}
+	err = req.ParseForm()
+	if err != nil {
+		log.Println(err)
+	}
+	tags := req.Form["tags"]
+	c.Update(bson.M{"_id": user.Id}, bson.M{"$set": bson.M{"tags": tags}})
 }
 
 // tokenHeader, err := req.Cookie("Auth")
