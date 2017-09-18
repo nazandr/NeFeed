@@ -3,9 +3,17 @@
   <h1 class="display-3">Hello, it is NeFeed</h1>
   <p class="lead">This service is in alpha/beta test. Sorry for everything(</p>
   <hr class="my-4">
+  {{ if .Auth }}
+  <p>You already authorized</p>
+  <p class="lead">
+    <a class="btn btn-success btn-lg" href="/feed/0" role="button">Your news feed</a>
+  </p>
+  {{ else }} 
   <p>You can authorizes down</p>
   <p class="lead">
     <a class="btn btn-success btn-lg" href="/auth" role="button">Authorizetion</a>
   </p>
+  {{ end }}
+  
 </div>
 {{ template "footer" . }}
