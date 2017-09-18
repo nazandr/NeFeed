@@ -59,7 +59,7 @@ func main() {
 	router.HandleFunc("/feed/{page:[0-9]+}", feed)
 	router.HandleFunc("/ratelike/{id}", like)
 	router.HandleFunc("/ratedislike/{id}", dislike)
-	http.ListenAndServe(":80", router)
+	http.ListenAndServe(":9000", router)
 }
 func mainPage(w http.ResponseWriter, req *http.Request) {
 	t := template.Must(template.ParseFiles(
@@ -222,8 +222,7 @@ func reg(w http.ResponseWriter, req *http.Request) {
 	}
 	log.Println(resp.StatusCode)
 	log.Println(resp.Header.Get("auth"))
-	expiration := time.Now().Add(30 * 24 * time.Hour)
-	cookie := http.Cookie{Name: "auth", Value: resp.Header.Get("auth"), Expires: expiration}
+	cookie := http.Cookie{Name: "auth", Value: resp.Header.Get("auth")}
 	http.SetCookie(w, &cookie)
 	defer resp.Body.Close()
 	http.Redirect(w, req, "/feed/0", 302)
