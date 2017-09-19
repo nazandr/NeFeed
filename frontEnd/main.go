@@ -240,9 +240,6 @@ func feed(w http.ResponseWriter, req *http.Request) {
 				if i.Id == a {
 					check = append(check, FeedArticle{i.Id, true, i.Title, i.Link, i.Source, i.Text, i.Timestamp})
 					break
-				} else {
-					check = append(check, FeedArticle{i.Id, false, i.Title, i.Link, i.Source, i.Text, i.Timestamp})
-					break
 				}
 			}
 		}
