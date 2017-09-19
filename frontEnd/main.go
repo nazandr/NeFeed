@@ -37,6 +37,16 @@ type Article struct {
 	Timestamp  time.Time       `bson:"timestamp"`
 }
 
+type FeedArticle struct {
+	Id        bson.ObjectId `bson:"_id,omitempty"`
+	Checked   bool
+	Title     string    `bson:"title"`
+	Link      string    `bson:"link"`
+	Source    string    `bson:"source"`
+	Text      string    `bson:"text"`
+	Timestamp time.Time `bson:"timestamp"`
+}
+
 type UserPublic struct {
 	Id          bson.ObjectId   `bson:"_id,omitempty"`
 	Email       string          `bson:"email"`
@@ -182,11 +192,6 @@ func feed(w http.ResponseWriter, req *http.Request) {
 			http.Redirect(w, req, "/", 302)
 			return
 		}
-		t := template.Must(template.ParseFiles(
-			"./templates/feed.html",
-			"./templates/header.html",
-			"./templates/footer.html",
-		))
 		nPages, err := strconv.Atoi(resp.Header.Get("npage"))
 		if err != nil {
 			log.Println("str to int err: ", err)
@@ -196,6 +201,55 @@ func feed(w http.ResponseWriter, req *http.Request) {
 		for i := 0; i <= nPages; i++ {
 			pages = append(pages, i)
 		}
+
+		// получение списк отмеченных статей
+		url = "http://server:12345/account"
+		r, err = http.NewRequest("GET", url, nil)
+		if err != nil {
+			log.Println(err)
+			http.Redirect(w, req, "/", 302)
+			return
+		}
+		c = &http.Client{}
+		r.Header.Add("auth", token.Value)
+		resp, err = c.Do(r)
+		if err != nil {
+			log.Printf("http.Do() error: %v\n", err)
+			http.Redirect(w, req, "/", 302)
+			return
+		}
+		ar, _ = ioutil.ReadAll(resp.Body)
+		var user UserPublic
+		err = json.Unmarshal(ar, &user)
+		if err != nil {
+			log.Printf("json unmarshal %v\n", err)
+			http.Redirect(w, req, "/", 302)
+			return
+		}
+
+		var checkAr []bson.ObjectId
+		var check []FeedArticle
+		for _, i := range user.LikeNews {
+			checkAr = append(checkAr, i)
+		}
+		for _, i := range user.DislikeNews {
+			checkAr = append(checkAr, i)
+		}
+		for _, i := range articles {
+			for _, a := range checkAr {
+				if i.Id == a {
+					check = append(check, FeedArticle{i.Id, true, i.Title, i.Link, i.Source, i.Text, i.Timestamp})
+				} else {
+					check = append(check, FeedArticle{i.Id, false, i.Title, i.Link, i.Source, i.Text, i.Timestamp})
+				}
+			}
+		}
+		t := template.Must(template.ParseFiles(
+			"./templates/feed.html",
+			"./templates/header.html",
+			"./templates/footer.html",
+		))
+
 		token, err := req.Cookie("auth")
 		var a bool
 		if (err != nil) || (token.Value == "") {
@@ -205,12 +259,12 @@ func feed(w http.ResponseWriter, req *http.Request) {
 		}
 
 		data := struct {
-			Art   []Article
+			Art   []FeedArticle
 			Pages []int
 			Title string
 			Auth  bool
 		}{
-			articles,
+			check,
 			pages,
 			"Список новостей",
 			a,

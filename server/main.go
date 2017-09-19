@@ -120,7 +120,7 @@ func main() {
 	router.Handle("ratedislike/{id}", restrictedHandler(rateDislike)).Methods("POST")
 	router.HandleFunc("/feed/{page:[0-9]+}", restrictedHandler(feed)).Methods("GET")
 	router.HandleFunc("/account", restrictedHandler(accountData)).Methods("GET")
-	router.HandleFunc("/account/chenge/tags", restrictedHandler(accountTagsChenge)).Methods("GET")
+	router.HandleFunc("/account/chenge/tags", restrictedHandler(accountTagsChange)).Methods("GET")
 	log.Fatal(http.ListenAndServe(":12345", router))
 	// err = http.ListenAndServeTLS(":12345", "./keys/server.crt", "./keys/server.key", http.Handler(router))
 
@@ -395,7 +395,7 @@ func accountData(w http.ResponseWriter, req *http.Request) {
 	respondWithJSON(w, http.StatusOK, user)
 }
 
-func accountTagsChenge(w http.ResponseWriter, req *http.Request) {
+func accountTagsChange(w http.ResponseWriter, req *http.Request) {
 	tokenHeader := req.Header.Get("auth")
 	ds := NewDataStore()
 	defer ds.Close()
