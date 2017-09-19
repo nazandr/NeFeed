@@ -335,10 +335,10 @@ func feed(w http.ResponseWriter, req *http.Request) {
 	}
 	if pageInt == 0 {
 		slice[0] = 0
-		slice[1] = 20
+		slice[1] = 10
 	} else {
-		slice[0] = 0 + 20*(pageInt)
-		slice[1] = 20 + 20*(pageInt)
+		slice[0] = 0 + 10*(pageInt)
+		slice[1] = 10 + 10*(pageInt)
 	}
 
 	if len(user.Feed) < slice[1] {
@@ -360,7 +360,7 @@ func feed(w http.ResponseWriter, req *http.Request) {
 	}
 	response, _ := json.Marshal(f)
 	w.Header().Set("Content-Type", "application/json")
-	nPage = len(user.Feed) / 20
+	nPage = len(user.Feed) / 10
 	w.Header().Set("npage", strconv.Itoa(nPage))
 	w.WriteHeader(http.StatusOK)
 	w.Write(response)
