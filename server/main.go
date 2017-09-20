@@ -44,6 +44,17 @@ type Article struct {
 	Timestamp  time.Time       `bson:"timestamp"`
 }
 
+type ArticleFeed struct {
+	Id         bson.ObjectId `bson:"_id,omitempty"`
+	Title      string        `bson:"title"`
+	Checked    bool
+	Link       string          `bson:"link"`
+	Source     string          `bson:"source"`
+	Text       string          `bson:"text"`
+	Duplicates []bson.ObjectId `bson:"duplicates"`
+	Timestamp  time.Time       `bson:"timestamp"`
+}
+
 type Token struct {
 	Token string `json:"token"`
 }
@@ -309,7 +320,7 @@ func feed(w http.ResponseWriter, req *http.Request) {
 	tokenHeader := req.Header.Get("auth")
 	var (
 		user  User
-		f     []Article
+		f     []ArticleFeed
 		slice [2]int
 		nPage int
 	)
@@ -349,14 +360,32 @@ func feed(w http.ResponseWriter, req *http.Request) {
 	for i := len(user.Feed) - 1; i >= 0; i-- {
 		reFeed = append(reFeed, user.Feed[i])
 	}
-
+	var checked []bson.ObjectId
+	for _, i := range user.LikeNews {
+		checked = append(checked, i)
+	}
+	for _, i := range user.DislikeNews {
+		checked = append(checked, i)
+	}
 	for _, a := range reFeed[slice[0]:slice[1]] {
 		var article Article
 		err = ca.FindId(a).One(&article)
 		if err != nil {
 			respondWithError(w, http.StatusBadRequest, "Can't find any of article")
 		}
-		f = append(f, article)
+		ch := false
+		for _, i := range checked {
+			if i == article.Id {
+				ch = true
+				f = append(f, ArticleFeed{article.Id, article.Title, true, article.Link, article.Source,
+					article.Text, article.Duplicates, article.Timestamp})
+				break
+			}
+		}
+		if ch != true {
+			f = append(f, ArticleFeed{article.Id, article.Title, false, article.Link, article.Source,
+				article.Text, article.Duplicates, article.Timestamp})
+		}
 	}
 	response, _ := json.Marshal(f)
 	w.Header().Set("Content-Type", "application/json")
