@@ -128,7 +128,7 @@ func main() {
 	router.Handle("/auth", auth).Methods("PUT")                       //singup
 	router.Handle("/auth", restrictedHandler(auth)).Methods("DELETE") //logout
 	router.Handle("/ratelike/{id}", restrictedHandler(rateLike)).Methods("POST")
-	router.Handle("ratedislike/{id}", restrictedHandler(rateDislike)).Methods("POST")
+	router.Handle("/ratedislike/{id}", restrictedHandler(rateDislike)).Methods("POST")
 	router.HandleFunc("/feed/{page:[0-9]+}", restrictedHandler(feed)).Methods("GET")
 	router.HandleFunc("/account", restrictedHandler(accountData)).Methods("GET")
 	router.HandleFunc("/account/chenge/tags", restrictedHandler(accountTagsChange)).Methods("GET")
