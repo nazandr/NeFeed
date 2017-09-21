@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/mauidude/go-readability"
+	"github.com/mmcdole/gofeed"
+	readability "github.com/nazandr/go-readability"
 	"github.com/streadway/amqp"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -34,8 +35,12 @@ type Article struct {
 type Source struct {
 	Name string   `json:"Name"`
 	Tags []string `json:"Tags"`
+	RSS  string   `json:"RSS"`
 }
-
+type Item struct {
+	Url    string
+	Source Source
+}
 type DataStore struct {
 	session *mgo.Session
 }
@@ -77,8 +82,7 @@ func init() {
 }
 
 func main() {
-	newItem := make(chan string, 3)
-	sor := make(chan Source)
+	newItem := make(chan Item, 3)
 	var err error
 
 	rabbitConn, err := amqp.Dial("amqp://rabbitmq:5672")
@@ -115,28 +119,27 @@ func main() {
 		time.Sleep(time.Second * 5)
 	}
 
-	for _, i := range links {
-		go Handler(i, newItem, sor)
+	for _, i := range sources {
+		go Handler(i, newItem)
 	}
 
-	go Manager(newItem, sor)
+	go Manager(newItem)
 
 	timer := time.NewTicker(time.Minute * 5)
 	for range timer.C {
-		for _, i := range links {
-			go Handler(i, newItem, sor)
+		for _, i := range sources {
+			go Handler(i, newItem)
 		}
 	}
 
 }
 
-func Manager(newItem chan string, sor chan Source) {
+func Manager(newItem chan Item) {
 	for {
 		select {
 		case res := <-newItem:
-			log.Print(res)
-			s := <-sor
-			go Parser(res, s)
+			log.Print(res.Url)
+			go Parser(res)
 		}
 	}
 }
@@ -158,70 +161,37 @@ func forBatler(id bson.ObjectId) {
 	}
 }
 
-// Handler check for new news
-func Handler(url string, newItem chan<- string, sor chan Source) {
+func Handler(item Source, newItem chan<- Item) {
 	ds := NewDataStore()
 	defer ds.Close()
 	c := ds.C("Articles")
 
-	val, err := goquery.NewDocument(url)
+	parser := gofeed.NewParser()
+	val, err := parser.ParseURL(item.RSS)
 	for err != nil {
-		val, err = goquery.NewDocument(url)
-		log.Println("handler goquery err: ", err)
-		time.Sleep(time.Second * 5)
+		log.Println("handler parser err: ", err)
+		time.Sleep(time.Second * 10)
+		val, err = parser.ParseURL(item.RSS)
 	}
 
 	var art Article
-	switch url {
-	case "https://habrahabr.ru/all/":
-		res := val.Find(".post__title_link").First()
-		link, _ := res.Attr("href")
-		err = c.Find(bson.M{"link": link}).One(&art)
-		if err == mgo.ErrNotFound {
-			newItem <- link
-			for _, i := range sources {
-				if i.Name == "https://habrahabr.ru/all/" {
-					sor <- i
-				}
-			}
-		}
-	case "https://geektimes.ru/all/":
-		res := val.Find(".post__title_link").First()
-		link, _ := res.Attr("href")
-		err = c.Find(bson.M{"link": link}).One(&art)
-		if err == mgo.ErrNotFound {
-			newItem <- link
-			for _, i := range sources {
-				if i.Name == "https://geektimes.ru/all/" {
-					sor <- i
-				}
-			}
-		}
-	case "https://tproger.ru":
-		res := val.Find(".entry-title").First().Find("a")
-		link, _ := res.Attr("href")
-		err = c.Find(bson.M{"link": link}).One(&art)
-		if err == mgo.ErrNotFound {
-			newItem <- link
-			for _, i := range sources {
-				if i.Name == "https://tproger.ru" {
-					sor <- i
-				}
-			}
-		}
+	link := val.Items[0].Link
+	err = c.Find(bson.M{"link": link}).One(&art)
+	if err == mgo.ErrNotFound {
+		newItem <- Item{link, item}
 	}
 }
 
 // Parser parse new news from Handler
-func Parser(link string, source Source) {
+func Parser(item Item) {
 	ds := NewDataStore()
 	defer ds.Close()
 	c := ds.C("Articles")
-	v, err := goquery.NewDocument(link)
+	v, err := goquery.NewDocument(item.Url)
 	for err != nil {
-		v, err = goquery.NewDocument(link)
 		log.Println("parser goquery err: ", err)
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 10)
+		v, err = goquery.NewDocument(item.Url)
 	}
 	html, _ := v.Html()
 	d, _ := readability.NewDocument(html)
@@ -234,13 +204,13 @@ func Parser(link string, source Source) {
 	numImg := strings.Count(text, "<img")
 	shingle, duplicates := searchDuplicates(text, c)
 	loc, _ := time.LoadLocation("Europe/Moscow")
-	err = c.Insert(Article{Title: title, Link: link, Source: source.Name, Tags: source.Tags, Text: text, TextLen: textLen,
+	err = c.Insert(Article{Title: title, Link: item.Url, Source: item.Source.Name, Tags: item.Source.Tags, Text: text, TextLen: textLen,
 		NumLinks: numLinks, NumImg: numImg, Timestamp: time.Now().In(loc), Shingle: shingle, Duplicates: duplicates})
 	if err != nil {
 		log.Println("Insert err: ", err)
 	}
 	var a Article
-	err = c.Find(bson.M{"link": link}).One(&a)
+	err = c.Find(bson.M{"link": item.Url}).One(&a)
 	if err != nil {
 		log.Println("parser find err: ", err)
 	}
