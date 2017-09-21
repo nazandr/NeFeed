@@ -193,6 +193,7 @@ func feed(w http.ResponseWriter, req *http.Request) {
 			http.Redirect(w, req, "/", 302)
 			return
 		}
+		// pagination
 		nPages, err := strconv.Atoi(resp.Header.Get("npage"))
 		if err != nil {
 			log.Println("str to int err: ", err)
@@ -202,6 +203,7 @@ func feed(w http.ResponseWriter, req *http.Request) {
 		for i := 0; i <= nPages; i++ {
 			pages = append(pages, i)
 		}
+		lastPage := pages[len(pages)-1]
 
 		t := template.Must(template.ParseFiles(
 			"./templates/feed.html",
@@ -218,13 +220,15 @@ func feed(w http.ResponseWriter, req *http.Request) {
 		}
 
 		data := struct {
-			Art   []ArticleFeed
-			Pages []int
-			Title string
-			Auth  bool
+			Art      []ArticleFeed
+			Pages    []int
+			LastPage int
+			Title    string
+			Auth     bool
 		}{
 			articles,
 			pages,
+			lastPage,
 			"Список новостей",
 			a,
 		}

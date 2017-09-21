@@ -1,12 +1,24 @@
 {{ template "header" . }}
+<script type="text/javascript">
+  ! function (d, i) {
+    if (!d.getElementById(i)) {
+      var j = d.createElement("script");
+      j.id = i;
+      j.src = "https://widgets.getpocket.com/v1/j/btn.js?v=1";
+      var w = d.getElementById(i);
+      d.body.appendChild(j);
+    }
+  }(document, "pocket-btn-js");
+
+</script>
 <div class="conteiner" style="padding: 65px 50px 0px 50px;">
   {{ range .Art }}
   <div class="row justify-content-center">
     {{ if .Checked }}
     <div class="col-11 col-xs-11 col-sm-11 col-md-10" style="border-left: thick solid #2196F3;">
       {{ else }}
-    <div class="col-11 col-xs-11 col-sm-11 col-md-10">
-    {{ end }}
+      <div class="col-11 col-xs-11 col-sm-11 col-md-10">
+        {{ end }}
         <h4>{{ .Title }}</h4>
         <em>{{ .Source }}</em>
         <br>
@@ -19,6 +31,8 @@
         <div class="row">
           <div class="col-12 col-xs-12 col-sm-8 col-md-8 justify-content-start" style="padding:5px">
             <a href="#" class="btn btn-secondary" onclick="window.open('{{ .Link }}')">Перейти на сайт</a>
+            <div style="padding:5px"></div>
+            <a href="https://getpocket.com/save" class="btn btn-danger pocket-btn" data-lang="en" data-save-url="{{ .Link }}" data-pocket-count="horizontal">Pocket</a>
           </div>
           <div class="col-12 col-xs-12 col-sm-4 col-md-4 justify-content-end" style="padding:5px">
             <div class="btn-group" role="group">
@@ -27,18 +41,40 @@
             </div>
           </div>
         </div>
-            <hr>
-        </div>
+        <hr>
       </div>
+    </div>
     {{ end }}
-    <nav>
-      <ul class="pagination">
-        <!-- <li class="page-item"><a class="page-link" href="#">Previous</a></li> -->
-        {{ range .Pages}}
-        <li class="page-item"><a class="page-link" href="/feed/{{ . }}">{{ . }}</a></li>
-        {{ end }}
-        <!-- <li class="page-item"><a class="page-link" href="#">Next</a></li> -->
-      </ul>
-    </nav>
+    <div class="row justify-content-center">
+      {{ if gt .LastPage 5 }}
+      <div class="col-12 col-sm-12">
+        <nav>
+          <ul class="pagination">
+            <li class="page-item"><a class="page-link" href="/feed/0">0</a></li>
+            <li class="page-item"><a class="page-link" href="/feed/1">1</a></li>
+            <li class="page-item"><a class="page-link" href="/feed/2">2</a></li>
+            <li class="page-item"><a class="page-link" href="/feed/3">3</a></li>
+            <li class="page-item"><a class="page-link" href="/feed/4">4</a></li>
+            <li class="page-item"><a class="page-link" href="/feed/5">5</a></li>
+            <li class="page-item">...</li>
+            <li class="page-item"><a class="page-link" href="/feed/{{ .LastPage }}">{{ .LastPage }}</a></li>
+          </ul>
+        </nav>
+      </div>
+      {{ else }}
+      <div class="col-12 col-sm-12">
+        <nav>
+          <ul class="pagination">
+            <!-- <li class="page-item"><a class="page-link" href="#">Previous</a></li> -->
+            {{ range .Pages}}
+            <li class="page-item"><a class="page-link" href="/feed/{{ . }}">{{ . }}</a></li>
+            {{ end }}
+            <!-- <li class="page-item"><a class="page-link" href="#">Next</a></li> -->
+          </ul>
+        </nav>
+      </div>
+      {{ end }}
+    </div>
   </div>
-  {{ template "footer" . }}
+</div>
+{{ template "footer" . }}
