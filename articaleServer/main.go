@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/mauidude/go-readability"
 	"github.com/mmcdole/gofeed"
+	readability "github.com/nazandr/go-readability"
 	"github.com/streadway/amqp"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
