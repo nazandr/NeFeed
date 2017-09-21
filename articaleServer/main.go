@@ -170,7 +170,8 @@ func Handler(item Source, newItem chan<- Item) {
 	val, err := parser.ParseURL(item.RSS)
 	for err != nil {
 		log.Println("handler parser err: ", err)
-		return
+		time.Sleep(time.Second * 10)
+		val, err = parser.ParseURL(item.RSS)
 	}
 
 	var art Article
@@ -188,9 +189,9 @@ func Parser(item Item) {
 	c := ds.C("Articles")
 	v, err := goquery.NewDocument(item.Url)
 	for err != nil {
-		v, err = goquery.NewDocument(item.Url)
 		log.Println("parser goquery err: ", err)
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 10)
+		v, err = goquery.NewDocument(item.Url)
 	}
 	html, _ := v.Html()
 	d, _ := readability.NewDocument(html)
