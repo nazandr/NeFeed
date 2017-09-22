@@ -130,6 +130,7 @@ func main() {
 	router.Handle("/ratelike/{id}", restrictedHandler(rateLike)).Methods("POST")
 	router.Handle("/ratedislike/{id}", restrictedHandler(rateDislike)).Methods("POST")
 	router.HandleFunc("/feed/{page:[0-9]+}", restrictedHandler(feed)).Methods("GET")
+	router.HandleFunc("/todayfeed", restrictedHandler(toDayFeed)).Methods("GET")
 	router.HandleFunc("/account", restrictedHandler(accountData)).Methods("GET")
 	router.HandleFunc("/account/chenge/tags", restrictedHandler(accountTagsChange)).Methods("GET")
 	log.Fatal(http.ListenAndServe(":12345", router))
@@ -422,6 +423,70 @@ func accountData(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	respondWithJSON(w, http.StatusOK, user)
+}
+
+func toDayFeed(w http.ResponseWriter, req *http.Request) {
+	tokenHeader := req.Header.Get("auth")
+	var (
+		user User
+		f    []ArticleFeed
+	)
+
+	ds := NewDataStore()
+	defer ds.Close()
+	c := ds.C("Users")
+	ca := ds.C("Articles")
+
+	token, _ := jwt.ParseWithClaims(tokenHeader, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		return verifyKey, nil
+	})
+	err := c.Find(bson.M{"email": token.Claims.(*Claims).Email}).One(&user)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Can't find user")
+		return
+	}
+
+	// revers feed ids
+	var reFeed []bson.ObjectId
+	for i := len(user.Feed) - 1; i >= 0; i-- {
+		reFeed = append(reFeed, user.Feed[i])
+	}
+	var checked []bson.ObjectId
+	for _, i := range user.LikeNews {
+		checked = append(checked, i)
+	}
+	for _, i := range user.DislikeNews {
+		checked = append(checked, i)
+	}
+	loc, _ := time.LoadLocation("Europe/Moscow")
+	date := time.Now().In(loc).Add(-24 * time.Hour)
+	for _, a := range reFeed {
+		var article Article
+		err = ca.FindId(a).One(&article)
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, "Can't find any of article")
+		}
+		ch := false
+		for _, i := range checked {
+			if i == article.Id {
+				ch = true
+				f = append(f, ArticleFeed{article.Id, article.Title, true, article.Link, article.Source,
+					article.Text, article.Duplicates, article.Timestamp})
+				break
+			}
+		}
+		if ch != true {
+			f = append(f, ArticleFeed{article.Id, article.Title, false, article.Link, article.Source,
+				article.Text, article.Duplicates, article.Timestamp})
+		}
+		if article.Timestamp.Before(date) {
+			break
+		}
+	}
+	response, _ := json.Marshal(f)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(response)
 }
 
 func accountTagsChange(w http.ResponseWriter, req *http.Request) {

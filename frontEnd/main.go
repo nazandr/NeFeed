@@ -78,6 +78,7 @@ func main() {
 	router.HandleFunc("/logout", logout)
 	router.HandleFunc("/registration", reg)
 	router.HandleFunc("/feed/{page:[0-9]+}", feed)
+	router.HandleFunc("/todayfeed", toDayFeed)
 	router.HandleFunc("/ratelike/{id}", like)
 	router.HandleFunc("/ratedislike/{id}", dislike)
 	http.ListenAndServe(":9000", router)
@@ -229,6 +230,73 @@ func feed(w http.ResponseWriter, req *http.Request) {
 			articles,
 			pages,
 			lastPage,
+			"Список новостей",
+			a,
+		}
+		err = t.Execute(w, data)
+		if err != nil {
+			log.Printf("template %v\n", err)
+			http.Redirect(w, req, "/", 302)
+			return
+		}
+	}
+}
+
+func toDayFeed(w http.ResponseWriter, req *http.Request) {
+	token, err := req.Cookie("auth")
+	if err != nil {
+		log.Println(err)
+		http.Redirect(w, req, "/auth", 302)
+	}
+
+	if token.Value == "" {
+		http.Redirect(w, req, "/", 302)
+	} else {
+		url := "http://server:12345/todayfeed"
+		r, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			log.Println(err)
+			http.Redirect(w, req, "/", 302)
+			return
+		}
+		c := &http.Client{}
+		r.Header.Add("auth", token.Value)
+		resp, err := c.Do(r)
+		if err != nil {
+			log.Printf("http.Do() error: %v\n", err)
+			http.Redirect(w, req, "/", 302)
+			return
+		}
+		ar, _ := ioutil.ReadAll(resp.Body)
+
+		var articles []ArticleFeed
+		err = json.Unmarshal(ar, &articles)
+		if err != nil {
+			log.Printf("json unmarshal %v\n", err)
+			http.Redirect(w, req, "/", 302)
+			return
+		}
+
+		t := template.Must(template.ParseFiles(
+			"./templates/today.html",
+			"./templates/header.html",
+			"./templates/footer.html",
+		))
+
+		token, err := req.Cookie("auth")
+		var a bool
+		if (err != nil) || (token.Value == "") {
+			a = false
+		} else {
+			a = true
+		}
+
+		data := struct {
+			Art   []ArticleFeed
+			Title string
+			Auth  bool
+		}{
+			articles,
 			"Список новостей",
 			a,
 		}
