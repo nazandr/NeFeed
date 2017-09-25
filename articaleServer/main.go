@@ -5,6 +5,7 @@ import (
 	"hash/crc32"
 	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -112,11 +113,16 @@ func main() {
 		log.Fatal("rabbitmq q err: ", err)
 	}
 
-	session, err = mgo.Dial("mongodb://mongo:27017")
+	mongoDBDialInfo := &mgo.DialInfo{
+		Addrs:    []string{"mongodb://mongo:27017"},
+		Username: os.Getenv("MONGO_USERNSME"),
+		Password: os.Getenv("MONGO_PASSWORD"),
+	}
+	session, err = mgo.DialWithInfo(mongoDBDialInfo)
 	for err != nil {
-		session, err = mgo.Dial("mongodb://mongo:27017")
 		log.Print(err)
 		time.Sleep(time.Second * 5)
+		session, err = mgo.DialWithInfo(mongoDBDialInfo)
 	}
 
 	for _, i := range sources {

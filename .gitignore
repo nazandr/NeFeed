@@ -3,3 +3,4 @@
 data/
 server/keys/
 docker-compose.yml
+.env

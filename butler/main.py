@@ -1,10 +1,11 @@
 import pika
+import os
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from time import sleep
 
 # Mongodb connection
-client = MongoClient("mongodb://mongo:27017")
+client = MongoClient('example.com', user=os.getenv("MONGO_USERNSME"), password=os.getenv("MONGO_PASSWORD"),authMechanism='SCRAM-SHA-1')
 db = client.Articles
 userColl = db.Users
 articlesColl = db.Articles
