@@ -1,3 +1,4 @@
-[{"Name": "https://geektimes.ru/", "Tags": ["it", "popular-science", "space"], "RSS": "https://habrahabr.ru/rss/all/all/"}, 
-{"Name": "https://habrahabr.ru/", "Tags": ["it", "programing"], "RSS": "https://geektimes.ru/rss/all/all/"}, 
-{"Name": "https://tproger.ru", "Tags": ["it", "programing"], "RSS":"https://tproger.ru/rss"}]
+[{"Name": "https://geektimes.ru", "Tags": ["it", "popular-science", "space"], "RSS": "https://habrahabr.ru/rss/all/all/"}, 
+{"Name": "https://habrahabr.ru", "Tags": ["it", "programing"], "RSS": "https://geektimes.ru/rss/all/all/"}, 
+{"Name": "https://tproger.ru", "Tags": ["it", "programing"], "RSS":"https://tproger.ru/rss"},
+{"Name": "https://thealphacentauri.net", "Tags": ["space", "popular-science"], "RSS":"https://thealphacentauri.net/feed/"}]
