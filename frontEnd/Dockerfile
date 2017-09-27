@@ -7,6 +7,5 @@ ADD ./tags.json /app/
 COPY ./templates/ /app/templates
 RUN  go get gopkg.in/mgo.v2; go get -u github.com/gorilla/mux; go build -o main
 
-EXPOSE 8888:8888
 
 ENTRYPOINT ["./main"]
