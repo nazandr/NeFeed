@@ -4,6 +4,18 @@
 
 <head>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-107144404-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments)
+    };
+    gtag('js', new Date());
+
+    gtag('config', 'UA-107144404-1');
+
+  </script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M"
@@ -23,10 +35,8 @@
         {{ if .Auth }}
         <a class="nav-item nav-link" href="/feed/0">Список новостей</a>
         <a class="nav-item nav-link" href="/todayfeed">За сегодня</a>
-        <a class="nav-item nav-link" href="/logout">Выйти</a>
-        {{ else }} 
-        <a class="nav-item nav-link" href="/auth">Авторизоваться</a>
-        {{ end }}
+        <a class="nav-item nav-link" href="/logout">Выйти</a> {{ else }}
+        <a class="nav-item nav-link" href="/auth">Авторизоваться</a> {{ end }}
       </div>
     </div>
   </nav>
