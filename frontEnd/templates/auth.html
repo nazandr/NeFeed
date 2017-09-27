@@ -4,12 +4,10 @@
   $(document).ready(function () {
     $('#check').click(function () {
       checked = $("input[type=checkbox]:checked").length;
-
       if (!checked) {
         alert("Выберите хотябы одну тему");
         return false;
       }
-
     });
   });
 

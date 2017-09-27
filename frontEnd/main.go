@@ -81,7 +81,7 @@ func main() {
 	router.HandleFunc("/todayfeed", toDayFeed)
 	router.HandleFunc("/ratelike/{id}", like)
 	router.HandleFunc("/ratedislike/{id}", dislike)
-	http.ListenAndServe(":9000", router)
+	log.Fatal(http.ListenAndServe(":9000", router))
 }
 func mainPage(w http.ResponseWriter, req *http.Request) {
 	t := template.Must(template.ParseFiles(
@@ -131,7 +131,7 @@ func like(w http.ResponseWriter, req *http.Request) {
 		http.Redirect(w, req, "/", 302)
 		return
 	}
-	http.Redirect(w, req, "/feed/0", 302)
+	w.WriteHeader(200)
 }
 
 func dislike(w http.ResponseWriter, req *http.Request) {
@@ -156,7 +156,7 @@ func dislike(w http.ResponseWriter, req *http.Request) {
 		http.Redirect(w, req, "/", 302)
 		return
 	}
-	http.Redirect(w, req, "/feed/0", 302)
+	w.WriteHeader(200)
 }
 
 func feed(w http.ResponseWriter, req *http.Request) {
