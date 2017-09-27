@@ -8,8 +8,8 @@ services:
             - mongo
             - server
         ports:
-            - 80:80
-
+            - 8080:8080
+    
     article-server:
         build:
             context: ./articaleServer
