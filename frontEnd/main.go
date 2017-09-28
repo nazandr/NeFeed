@@ -96,12 +96,17 @@ func mainPage(w http.ResponseWriter, req *http.Request) {
 	} else {
 		a = true
 	}
+	l, d := rateData(token.Value)
 	data := struct {
 		Title string
 		Auth  bool
+		L     int
+		D     int
 	}{
 		"NeFeed",
 		a,
+		l,
+		d,
 	}
 	err = t.Execute(w, data)
 	if err != nil {
