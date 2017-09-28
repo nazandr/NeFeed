@@ -31,13 +31,21 @@
           <span class="navbar-toggler-icon"></span>
         </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <div class="navbar-nav">
         {{ if .Auth }}
+        <div class="nav navbar-nav">
         <a class="nav-item nav-link" href="/feed/0">Список новостей</a>
         <a class="nav-item nav-link" href="/todayfeed">За сегодня</a>
-        <a class="nav-item nav-link" href="/logout">Выйти</a> {{ else }}
-        <a class="nav-item nav-link" href="/auth">Авторизоваться</a> {{ end }}
+        <a class="nav-item nav-link" href="/logout">Выйти</a> 
+        </div>
+        <div class="nav navbar-nav navbar-right">
+            <a class="nav-item nav-link" href="#" disabled>Liked: {{ .L }}</a>
+            <a class="nav-item nav-link" href="#" disabled>Disliked: {{ .D }}</a>
+          </div>
+        {{ else }}
+        <div class="navbar-nav">
+        <a class="nav-item nav-link" href="/auth">Авторизоваться</a> 
+        </div>
+        {{ end }}
       </div>
-    </div>
   </nav>
   {{ end }}

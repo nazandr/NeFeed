@@ -220,18 +220,24 @@ func feed(w http.ResponseWriter, req *http.Request) {
 			a = true
 		}
 
+		l, d := rateData(token.Value)
+
 		data := struct {
 			Art      []ArticleFeed
 			Pages    []int
 			LastPage int
 			Title    string
 			Auth     bool
+			L        int
+			D        int
 		}{
 			articles,
 			pages,
 			lastPage,
 			"Список новостей",
 			a,
+			l,
+			d,
 		}
 		err = t.Execute(w, data)
 		if err != nil {
@@ -291,14 +297,20 @@ func toDayFeed(w http.ResponseWriter, req *http.Request) {
 			a = true
 		}
 
+		l, d := rateData(token.Value)
+
 		data := struct {
 			Art   []ArticleFeed
 			Title string
 			Auth  bool
+			L     int
+			D     int
 		}{
 			articles,
-			"Список новостей",
+			"За сегодня",
 			a,
+			l,
+			d,
 		}
 		err = t.Execute(w, data)
 		if err != nil {
@@ -386,4 +398,31 @@ func logout(w http.ResponseWriter, req *http.Request) {
 	cookie := http.Cookie{Name: "auth", Value: "", Expires: time.Now()}
 	http.SetCookie(w, &cookie)
 	http.Redirect(w, req, "/", 302)
+}
+
+func rateData(token string) (like int, dislike int) {
+	url := "http://server:12345/account"
+	r, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	c := &http.Client{}
+	r.Header.Add("auth", token)
+	resp, err := c.Do(r)
+	if err != nil {
+		log.Printf("http.Do() error: %v\n", err)
+		return
+	}
+	ar, _ := ioutil.ReadAll(resp.Body)
+
+	var user UserPublic
+	err = json.Unmarshal(ar, &user)
+	if err != nil {
+		log.Printf("json unmarshal %v\n", err)
+		return
+	}
+	like = len(user.LikeNews)
+	dislike = len(user.DislikeNews)
+	return
 }
