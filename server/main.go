@@ -285,6 +285,11 @@ func rateLike(w http.ResponseWriter, req *http.Request) {
 		respondWithError(w, http.StatusBadRequest, "Can't find user")
 		return
 	}
+	for _, i := range user.DislikeNews {
+		if bson.ObjectIdHex(id["id"]) == i {
+			return
+		}
+	}
 	err = c.Update(bson.M{"_id": user.Id}, bson.M{"$addToSet": bson.M{"likeNews": bson.ObjectIdHex(id["id"])}})
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Can't add this article")
@@ -308,6 +313,11 @@ func rateDislike(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Can't find user")
 		return
+	}
+	for _, i := range user.LikeNews {
+		if bson.ObjectIdHex(id["id"]) == i {
+			return
+		}
 	}
 	err = c.Update(bson.M{"_id": user.Id}, bson.M{"$addToSet": bson.M{"dislikeNews": bson.ObjectIdHex(id["id"])}})
 	if err != nil {
