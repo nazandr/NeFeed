@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -204,8 +205,8 @@ var auth = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Println(err)
 		}
-		password := req.FormValue("password")
-		email := req.FormValue("email")
+		password := strings.ToLower(req.FormValue("password"))
+		email := strings.ToLower(req.FormValue("email"))
 		log.Println(email, password)
 		var user User
 		err = c.Find(bson.M{"email": email, "password": password}).One(&user)
@@ -238,8 +239,8 @@ var auth = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Println(err)
 		}
-		password := req.FormValue("password")
-		email := req.FormValue("email")
+		password := strings.ToLower(req.FormValue("password"))
+		email := strings.ToLower(req.FormValue("email"))
 		log.Println(email, password)
 		tags := req.Form["tags"]
 		age := req.Form["age"]
