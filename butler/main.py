@@ -13,11 +13,11 @@ articlesColl = db.Articles
 try:
     connection = pika.BlockingConnection(pika.URLParameters("amqp://rabbitmq:5672"))
 except pika.exceptions.ConnectionClosed:
-    sleep(10)
+    sleep(5)
     try:
         connection = pika.BlockingConnection(pika.URLParameters("amqp://rabbitmq:5672"))
     except pika.exceptions.ConnectionClosed:
-        sleep(10)
+        sleep(5)
         connection = pika.BlockingConnection(pika.URLParameters("amqp://rabbitmq:5672"))
 
 channel = connection.channel()

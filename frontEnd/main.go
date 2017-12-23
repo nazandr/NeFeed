@@ -28,24 +28,22 @@ type Tags struct {
 }
 
 type Article struct {
-	Id         bson.ObjectId   `bson:"_id,omitempty"`
-	Title      string          `bson:"title"`
-	Link       string          `bson:"link"`
-	Source     string          `bson:"source"`
-	Text       string          `bson:"text"`
-	Duplicates []bson.ObjectId `bson:"duplicates"`
-	Timestamp  time.Time       `bson:"timestamp"`
+	Id        bson.ObjectId `bson:"_id,omitempty"`
+	Title     string        `bson:"title"`
+	Link      string        `bson:"link"`
+	Source    string        `bson:"source"`
+	Text      string        `bson:"text"`
+	Timestamp time.Time     `bson:"timestamp"`
 }
 
 type ArticleFeed struct {
-	Id         bson.ObjectId `bson:"_id,omitempty"`
-	Title      string        `bson:"title"`
-	Checked    bool
-	Link       string          `bson:"link"`
-	Source     string          `bson:"source"`
-	Text       string          `bson:"text"`
-	Duplicates []bson.ObjectId `bson:"duplicates"`
-	Timestamp  time.Time       `bson:"timestamp"`
+	Id        bson.ObjectId `bson:"_id,omitempty"`
+	Title     string        `bson:"title"`
+	Checked   bool
+	Link      string    `bson:"link"`
+	Source    string    `bson:"source"`
+	Text      string    `bson:"text"`
+	Timestamp time.Time `bson:"timestamp"`
 }
 
 type UserPublic struct {
@@ -77,6 +75,7 @@ func main() {
 	router.HandleFunc("/login", login)
 	router.HandleFunc("/logout", logout)
 	router.HandleFunc("/registration", reg)
+	router.HandleFunc("/account", account)
 	router.HandleFunc("/feed/{page:[0-9]+}", feed)
 	router.HandleFunc("/todayfeed", toDayFeed)
 	router.HandleFunc("/ratelike/{id}", like)
@@ -90,13 +89,24 @@ func mainPage(w http.ResponseWriter, req *http.Request) {
 		"./templates/footer.html",
 	))
 	token, err := req.Cookie("auth")
-	var a bool
-	if (err != nil) || (token.Value == "") {
+	var (
+		a bool
+		l int
+		d int
+	)
+
+	if err == http.ErrNoCookie {
 		a = false
+		cookie := http.Cookie{Name: "auth", Value: ""}
+		req.AddCookie(&cookie)
+		l, d = 0, 0
+	} else if token.Value == "" {
+		a = false
+		l, d = 0, 0
 	} else {
 		a = true
+		l, d = rateData(token.Value)
 	}
-	l, d := rateData(token.Value)
 	data := struct {
 		Title string
 		Auth  bool
@@ -370,7 +380,7 @@ func reg(w http.ResponseWriter, req *http.Request) {
 	log.Println(resp.StatusCode)
 	log.Println(resp.Header.Get("auth"))
 	expiration := time.Now().Add(30 * 24 * time.Hour)
-	cookie := http.Cookie{Name: "auth", Value: resp.Header.Get("auth"), Expires: expiration}
+	cookie := http.Cookie{Name: "auth", Value: resp.Header.Get("token"), Expires: expiration}
 	http.SetCookie(w, &cookie)
 	defer resp.Body.Close()
 	http.Redirect(w, req, "/feed/0", 302)
@@ -393,7 +403,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 	ar, _ := ioutil.ReadAll(resp.Body)
 	log.Println(string(ar))
 	expiration := time.Now().Add(30 * 24 * time.Hour)
-	cookie := http.Cookie{Name: "auth", Value: resp.Header.Get("auth"), Expires: expiration}
+	cookie := http.Cookie{Name: "auth", Value: resp.Header.Get("token"), Expires: expiration}
 	http.SetCookie(w, &cookie)
 	defer resp.Body.Close()
 	http.Redirect(w, req, "/feed/0", 302)
@@ -403,6 +413,10 @@ func logout(w http.ResponseWriter, req *http.Request) {
 	cookie := http.Cookie{Name: "auth", Value: "", Expires: time.Now()}
 	http.SetCookie(w, &cookie)
 	http.Redirect(w, req, "/", 302)
+}
+
+func account(w http.ResponseWriter, req *http.Request) {
+
 }
 
 func rateData(token string) (like int, dislike int) {

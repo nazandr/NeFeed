@@ -16,7 +16,11 @@ services:
         depends_on:
             - "mongo"
             - "rabbitmq"
-            
+    readability:
+        build:
+            context: ./readability
+        ports:
+            - 8000:8000
     butler1:
         build:
             context: ./butler

@@ -19,6 +19,8 @@ type User struct {
 	Id          bson.ObjectId   `bson:"_id,omitempty"`
 	Email       string          `bson:"email"`
 	Password    string          `bson:"password"`
+	Age         string          `bson:"age"`
+	Gender      string          `bson:"gender"`
 	Tags        []string        `bson:"tags"`
 	Feed        []bson.ObjectId `bson:"feed"`
 	LikeNews    []bson.ObjectId `bson:"likeNews"`
@@ -29,30 +31,37 @@ type UserPublic struct {
 	Id          bson.ObjectId   `bson:"_id,omitempty"`
 	Email       string          `bson:"email"`
 	Tags        []string        `bson:"tags"`
+	Age         string          `bson:"age"`
+	Gender      string          `bson:"gender"`
 	Feed        []bson.ObjectId `bson:"feed"`
 	LikeNews    []bson.ObjectId `bson:"likeNews"`
 	DislikeNews []bson.ObjectId `bson:"dislikeNews"`
 }
 
 type Article struct {
-	Id         bson.ObjectId   `bson:"_id,omitempty"`
-	Title      string          `bson:"title"`
-	Link       string          `bson:"link"`
-	Source     string          `bson:"source"`
-	Text       string          `bson:"text"`
-	Duplicates []bson.ObjectId `bson:"duplicates"`
-	Timestamp  time.Time       `bson:"timestamp"`
+	Id        bson.ObjectId `bson:"_id,omitempty"`
+	Title     string        `bson:"title"`
+	Link      string        `bson:"link"`
+	TopImage  string        `bson:"topImage"`
+	Source    string        `bson:"source"`
+	Tags      []string      `bson:"tags"`
+	Text      string        `bson:"text"`
+	RawText   string        `bson:"RowText"`
+	TextLen   int           `bson:"textLen"`
+	NumLinks  int           `bson:"numLinks"`
+	NumImg    int           `bson:"numImg"`
+	Timestamp time.Time     `bson:"timestamp"`
 }
 
 type ArticleFeed struct {
-	Id         bson.ObjectId `bson:"_id,omitempty"`
-	Title      string        `bson:"title"`
-	Checked    bool
-	Link       string          `bson:"link"`
-	Source     string          `bson:"source"`
-	Text       string          `bson:"text"`
-	Duplicates []bson.ObjectId `bson:"duplicates"`
-	Timestamp  time.Time       `bson:"timestamp"`
+	Id        bson.ObjectId `bson:"_id,omitempty"`
+	Title     string        `bson:"title"`
+	Checked   bool
+	Link      string `bson:"link"`
+	TopImage  string
+	Source    string    `bson:"source"`
+	Text      string    `bson:"text"`
+	Timestamp time.Time `bson:"timestamp"`
 }
 
 type Token struct {
@@ -124,9 +133,8 @@ func main() {
 		time.Sleep(time.Second * 5)
 	}
 	router := mux.NewRouter()
-	router.HandleFunc("/auth", auth).Methods("POST")                  //login
-	router.Handle("/auth", auth).Methods("PUT")                       //singup
-	router.Handle("/auth", restrictedHandler(auth)).Methods("DELETE") //logout
+	router.HandleFunc("/auth", auth).Methods("POST") //login
+	router.Handle("/auth", auth).Methods("PUT")      //singup
 	router.Handle("/ratelike/{id}", restrictedHandler(rateLike)).Methods("POST")
 	router.Handle("/ratedislike/{id}", restrictedHandler(rateDislike)).Methods("POST")
 	router.HandleFunc("/feed/{page:[0-9]+}", restrictedHandler(feed)).Methods("GET")
@@ -221,15 +229,8 @@ var auth = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		w.Header().Set("auth", signedToken)
+		w.Header().Set("token", signedToken)
 		w.WriteHeader(200)
-		log.Println(signedToken)
-
-	case "DELETE":
-		w.Header().Add("auth", "")
-		w.WriteHeader(200)
-		respondWithJSON(w, 200, "log out")
-		return
 	case "PUT":
 		err := req.ParseForm()
 		if err != nil {
@@ -239,12 +240,14 @@ var auth = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		email := req.FormValue("email")
 		log.Println(email, password)
 		tags := req.Form["tags"]
+		age := req.Form["age"]
+		gender := req.Form["gender"]
 		var user User
 		err = c.Find(bson.M{"email": email, "password": password}).One(&user)
 		log.Println(user)
-		log.Println(err)
+
 		if err == mgo.ErrNotFound {
-			err = c.Insert(User{Email: email, Password: password, Tags: tags})
+			err = c.Insert(User{Email: email, Password: password, Tags: tags, Age: age[0], Gender: gender[0]})
 
 			claims := Claims{
 				email,
@@ -260,7 +263,7 @@ var auth = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			w.Header().Set("auth", signedToken)
+			w.Header().Set("token", signedToken)
 			w.WriteHeader(200)
 		} else {
 			respondWithError(w, http.StatusBadRequest, "User already iu use")
@@ -333,7 +336,7 @@ func feed(w http.ResponseWriter, req *http.Request) {
 		user  User
 		f     []ArticleFeed
 		slice [2]int
-		nPage int
+		// nPage int
 	)
 
 	ds := NewDataStore()
@@ -388,21 +391,23 @@ func feed(w http.ResponseWriter, req *http.Request) {
 		for _, i := range checked {
 			if i == article.Id {
 				ch = true
-				f = append(f, ArticleFeed{article.Id, article.Title, true, article.Link, article.Source,
-					article.Text, article.Duplicates, article.Timestamp})
+				f = append(f, ArticleFeed{article.Id, article.Title, true, article.Link, article.TopImage, article.Source,
+					article.Text, article.Timestamp})
 				break
 			}
 		}
 		if ch != true {
-			f = append(f, ArticleFeed{article.Id, article.Title, false, article.Link, article.Source,
-				article.Text, article.Duplicates, article.Timestamp})
+			f = append(f, ArticleFeed{article.Id, article.Title, false, article.Link, article.TopImage, article.Source,
+				article.Text, article.Timestamp})
 		}
 	}
-	response, _ := json.Marshal(f)
+	response, err := json.Marshal(f)
+	if err != nil {
+		log.Println("json marshal: ", err)
+	}
 	w.Header().Set("Content-Type", "application/json")
-	nPage = len(user.Feed) / 10
-	w.Header().Set("npage", strconv.Itoa(nPage))
-	w.WriteHeader(http.StatusOK)
+	// nPage = len(user.Feed) / 10
+	// w.Header().Set("npage", strconv.Itoa(nPage))
 	w.Write(response)
 }
 
@@ -480,20 +485,23 @@ func toDayFeed(w http.ResponseWriter, req *http.Request) {
 		for _, i := range checked {
 			if i == article.Id {
 				ch = true
-				f = append(f, ArticleFeed{article.Id, article.Title, true, article.Link, article.Source,
-					article.Text, article.Duplicates, article.Timestamp})
+				f = append(f, ArticleFeed{article.Id, article.Title, true, article.Link, article.TopImage, article.Source,
+					article.Text, article.Timestamp})
 				break
 			}
 		}
 		if ch != true {
-			f = append(f, ArticleFeed{article.Id, article.Title, false, article.Link, article.Source,
-				article.Text, article.Duplicates, article.Timestamp})
+			f = append(f, ArticleFeed{article.Id, article.Title, false, article.Link, article.TopImage, article.Source,
+				article.Text, article.Timestamp})
 		}
 		if article.Timestamp.Before(date) {
 			break
 		}
 	}
-	response, _ := json.Marshal(f)
+	response, err := json.Marshal(f)
+	if err != nil {
+		log.Println("json marshal: ", err)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(response)

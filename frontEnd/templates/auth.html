@@ -35,13 +35,31 @@
         <br>
         <label for="inputPassword" class="sr-only">Password</label>
         <input name="password" type="password" class="form-control" placeholder="Password" required>
-        </br>
+        <br>
+        <h2>Информация о вас</h2>
+        <h3>Возраст</h3>
+        <div class="form-check">
+          <label class="form-check-label">
+            <input class="form-check-input" type="radio" name="age" value="0-18">0-18
+            <input class="form-check-input" type="radio" name="age" value="18-30">18-30
+            <input class="form-check-input" type="radio" name="age" value="30-45">30-45
+            <input class="form-check-input" type="radio" name="age" value="45-60">45-60
+            <input class="form-check-input" type="radio" name="age" value="60+">60+
+        </div>
+        <h3>Пол</h3>
+        <div class="form-check">
+          <label class="form-check-label">
+            <input class="form-check-input" type="radio" name="gender" value="male">Мужчина
+            <input class="form-check-input" type="radio" name="gender" value="female">Женщина
+            <input class="form-check-input" type="radio" name="gender" value="other">Другое
+          </label>
+        </div>
         <h2>Выберите темы которые интересуют</h2>
         {{range .Tags}}
         <div class="form-check">
           <label class="form-check-label">
-                              <input class="form-check-input" type="checkbox" name="tags" value="{{ .Value }}"> {{ .Name }}
-                            </label>
+            <input class="form-check-input" type="checkbox" name="tags" value="{{ .Value }}"> {{ .Name }}
+          </label>
         </div>
         {{end}}
         <button class="btn btn-md btn-success btn-block" type="submit" id="check">Отправить</button>
