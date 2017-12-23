@@ -230,6 +230,7 @@ var auth = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			log.Fatal(err)
 		}
 		w.Header().Set("token", signedToken)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.WriteHeader(200)
 	case "PUT":
 		err := req.ParseForm()
@@ -263,6 +264,7 @@ var auth = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				log.Fatal(err)
 			}
+			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("token", signedToken)
 			w.WriteHeader(200)
 		} else {
@@ -406,6 +408,7 @@ func feed(w http.ResponseWriter, req *http.Request) {
 		log.Println("json marshal: ", err)
 	}
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	// nPage = len(user.Feed) / 10
 	// w.Header().Set("npage", strconv.Itoa(nPage))
 	w.Write(response)
