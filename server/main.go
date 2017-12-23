@@ -11,6 +11,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -141,7 +142,8 @@ func main() {
 	router.HandleFunc("/todayfeed", restrictedHandler(toDayFeed)).Methods("GET")
 	router.HandleFunc("/account", restrictedHandler(accountData)).Methods("GET")
 	router.HandleFunc("/account/chenge/tags", restrictedHandler(accountTagsChange)).Methods("GET")
-	log.Fatal(http.ListenAndServe(":12345", router))
+	handler := cors.Default().Handler(router)
+	log.Fatal(http.ListenAndServe(":12345", handler))
 	// err = http.ListenAndServeTLS(":12345", "./keys/server.crt", "./keys/server.key", http.Handler(router))
 
 	// if err != nil {
@@ -230,7 +232,6 @@ var auth = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			log.Fatal(err)
 		}
 		w.Header().Set("token", signedToken)
-		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.WriteHeader(200)
 	case "PUT":
 		err := req.ParseForm()
@@ -264,7 +265,6 @@ var auth = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("token", signedToken)
 			w.WriteHeader(200)
 		} else {
