@@ -143,7 +143,10 @@ func main() {
 	router.HandleFunc("/todayfeed", restrictedHandler(toDayFeed)).Methods("GET")
 	router.HandleFunc("/account", restrictedHandler(accountData)).Methods("GET")
 	router.HandleFunc("/account/chenge/tags", restrictedHandler(accountTagsChange)).Methods("GET")
-	handler := cors.Default().Handler(router)
+	handler := cors.New(cors.Options{
+		AllowedOrigins:   []string{" http://localhost:8100"},
+		AllowCredentials: true,
+	})
 	log.Fatal(http.ListenAndServe(":12345", handler))
 	// err = http.ListenAndServeTLS(":12345", "./keys/server.crt", "./keys/server.key", http.Handler(router))
 
