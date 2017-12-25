@@ -147,7 +147,7 @@ func main() {
 		AllowedOrigins:   []string{" http://localhost:8100"},
 		AllowCredentials: true,
 	})
-	handler := c.Handler(c)
+	handler := c.Handler(router)
 	log.Fatal(http.ListenAndServe(":12345", handler))
 	// err = http.ListenAndServeTLS(":12345", "./keys/server.crt", "./keys/server.key", http.Handler(router))
 
