@@ -135,10 +135,10 @@ func main() {
 		time.Sleep(time.Second * 5)
 	}
 	router := mux.NewRouter()
-	router.HandleFunc("/auth", auth).Methods("POST") //login
-	router.Handle("/auth", auth).Methods("PUT")      //singup
-	router.Handle("/ratelike/{id}", restrictedHandler(rateLike)).Methods("POST")
-	router.Handle("/ratedislike/{id}", restrictedHandler(rateDislike)).Methods("POST")
+	router.HandleFunc("/login", login).Methods("POST")
+	router.HandleFunc("/signup", signup).Methods("POST")
+	router.HandleFunc("/ratelike/{id}", restrictedHandler(rateLike)).Methods("POST")
+	router.HandleFunc("/ratedislike/{id}", restrictedHandler(rateDislike)).Methods("POST")
 	router.HandleFunc("/feed/{page:[0-9]+}", restrictedHandler(feed)).Methods("GET")
 	router.HandleFunc("/todayfeed", restrictedHandler(toDayFeed)).Methods("GET")
 	router.HandleFunc("/account", restrictedHandler(accountData)).Methods("GET")
@@ -149,11 +149,6 @@ func main() {
 	})
 	handler := c.Handler(router)
 	log.Fatal(http.ListenAndServe(":12345", handler))
-	// err = http.ListenAndServeTLS(":12345", "./keys/server.crt", "./keys/server.key", http.Handler(router))
-
-	// if err != nil {
-	// 	log.Fatal("ListenAndServe: ", err)
-	// }
 }
 
 // middleware to protect private pages
@@ -196,31 +191,40 @@ func restrictedHandler(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-var auth = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+func signup(w http.ResponseWriter, req *http.Request) {
+	// db conection
 	ds := NewDataStore()
 	defer ds.Close()
 	c := ds.C("Users")
 
-	switch req.Method {
-	default:
-		http.Error(w, "Method Not Allowed", 405)
-	case "POST": //LogIn
-		err := req.ParseForm()
-		if err != nil {
-			log.Println(err)
-		}
-		password := strings.ToLower(req.FormValue("password"))
-		email := strings.ToLower(req.FormValue("email"))
-		log.Println(email, password)
-		var user User
-		err = c.Find(bson.M{"email": email, "password": password}).One(&user)
-		if err == mgo.ErrNotFound {
-			respondWithError(w, http.StatusBadRequest, "User not found")
-			return
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
+	// form parsing
+	err := req.ParseForm()
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Can't parse form")
+		return
+	}
+	password := req.FormValue("password")
+	email := strings.ToLower(req.FormValue("email"))
+	tags := req.Form["tags"]
+	age := req.Form["age"]
+	gender := req.Form["gender"]
+
+	if (password == "") || (email == "") {
+		respondWithError(w, http.StatusBadRequest, "Email or password not specified")
+		return
+	}
+	if (len(tags) == 0) || (age[0] == "") || (gender[0] == "") {
+		respondWithError(w, http.StatusBadRequest, "Tags, age or gender not specified")
+		return
+	}
+
+	// uniqueness check user data
+	var user User
+	err = c.Find(bson.M{"email": email, "password": password}).One(&user)
+
+	// generate token
+	if err == mgo.ErrNotFound {
+		err = c.Insert(User{Email: email, Password: password, Tags: tags, Age: age[0], Gender: gender[0]})
 
 		claims := Claims{
 			email,
@@ -228,56 +232,63 @@ var auth = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 				ExpiresAt: expireToken,
 			},
 		}
-
 		token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-
 		signedToken, err := token.SignedString(signKey)
 
 		if err != nil {
-			log.Fatal(err)
+			respondWithError(w, http.StatusBadRequest, "Can't generate token, try again")
+			return
 		}
 		w.Header().Set("token", signedToken)
 		w.WriteHeader(200)
-	case "PUT":
-		err := req.ParseForm()
-		if err != nil {
-			log.Println(err)
-		}
-		password := strings.ToLower(req.FormValue("password"))
-		email := strings.ToLower(req.FormValue("email"))
-		log.Println(email, password)
-		tags := req.Form["tags"]
-		age := req.Form["age"]
-		gender := req.Form["gender"]
-		var user User
-		err = c.Find(bson.M{"email": email, "password": password}).One(&user)
-		log.Println(user)
-
-		if err == mgo.ErrNotFound {
-			err = c.Insert(User{Email: email, Password: password, Tags: tags, Age: age[0], Gender: gender[0]})
-
-			claims := Claims{
-				email,
-				jwt.StandardClaims{
-					ExpiresAt: expireToken,
-				},
-			}
-
-			token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-
-			signedToken, err := token.SignedString(signKey)
-
-			if err != nil {
-				log.Fatal(err)
-			}
-			w.Header().Set("token", signedToken)
-			w.WriteHeader(200)
-		} else {
-			respondWithError(w, http.StatusBadRequest, "User already iu use")
-			return
-		}
+	} else {
+		respondWithError(w, http.StatusBadRequest, "User already registered")
 	}
-})
+}
+
+func login(w http.ResponseWriter, req *http.Request) {
+	// db conection
+	ds := NewDataStore()
+	defer ds.Close()
+	c := ds.C("Users")
+
+	// form parsing
+	err := req.ParseForm()
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Can't parse form")
+		return
+	}
+	password := req.FormValue("password")
+	email := strings.ToLower(req.FormValue("email"))
+	if (password == "") || (email == "") {
+		respondWithError(w, http.StatusBadRequest, "Email or password not specified")
+		return
+	}
+
+	var user User
+	err = c.Find(bson.M{"email": email, "password": password}).One(&user)
+	if err == mgo.ErrNotFound {
+		respondWithError(w, http.StatusBadRequest, "User not found")
+		return
+	}
+
+	// generate token
+	claims := Claims{
+		email,
+		jwt.StandardClaims{
+			ExpiresAt: expireToken,
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	signedToken, err := token.SignedString(signKey)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Can't generate token, try again")
+		return
+	}
+
+	w.Header().Set("token", signedToken)
+	w.WriteHeader(200)
+}
 
 func rateLike(w http.ResponseWriter, req *http.Request) {
 	tokenHeader := req.Header.Get("auth")
