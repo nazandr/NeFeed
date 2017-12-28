@@ -1,6 +1,35 @@
 version: '2'
 
 services:
+    nginx:
+        build: ./nginx-le
+        image: umputun/nginx-le:latest
+        hostname: nginx
+        restart: always
+        container_name: nginx
+
+        logging:
+          driver: json-file
+          options:
+              max-size: "10m"
+              max-file: "5"
+
+        volumes:
+            - ./etc/ssl:/etc/nginx/ssl
+            - ./etc/service-example.conf:/etc/nginx/service.conf
+
+        ports:
+            - "80:80"
+            - "443:443"
+
+        environment:
+            - TZ=America/Chicago
+            - LETSENCRYPT=true
+            - LE_EMAIL=naznadr72@gmail.com
+            - LE_FQDN=www.nefeed.tk
+            #- SSL_CERT=le-crt.pem
+            #- SSL_KEY=le-key.pem
+
     front-end:
         build:
             context: ./frontEnd
@@ -16,11 +45,13 @@ services:
         depends_on:
             - "mongo"
             - "rabbitmq"
+        restart: always
     readability:
         build:
             context: ./readability
         ports:
             - 8000:8000
+        restart: always
     butler1:
         build:
             context: ./butler
@@ -50,7 +81,7 @@ services:
             - mongo
         ports:
             - 12345:12345
-
+        restart: always
     rabbitmq:
         image: rabbitmq:3.6.12-management
         ports:
