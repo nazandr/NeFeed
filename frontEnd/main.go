@@ -366,7 +366,7 @@ func auth(w http.ResponseWriter, req *http.Request) {
 
 func reg(w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
-	r, err := http.NewRequest("PUT", "http://server:12345/auth", strings.NewReader(req.Form.Encode()))
+	r, err := http.NewRequest("PUT", "http://server:12345/signup", strings.NewReader(req.Form.Encode()))
 	if err != nil {
 		log.Println(err)
 	}
@@ -388,7 +388,7 @@ func reg(w http.ResponseWriter, req *http.Request) {
 
 func login(w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
-	r, err := http.NewRequest("POST", "http://server:12345/auth", strings.NewReader(req.Form.Encode()))
+	r, err := http.NewRequest("POST", "http://server:12345/login", strings.NewReader(req.Form.Encode()))
 
 	if err != nil {
 		log.Println(err)
