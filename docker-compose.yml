@@ -30,6 +30,16 @@ services:
     #         #- SSL_CERT=le-crt.pem
     #         #- SSL_KEY=le-key.pem
 
+    caddy:
+        image: abiosoft/caddy
+        restart: always
+        volumes:
+            - ./caddy/Caddyfile:/etc/Caddyfile
+            - .caddy/ssl:/root/.caddy
+        ports:
+            - "80:80"
+            - "443:443"
+
     front-end:
         build:
             context: ./frontEnd
