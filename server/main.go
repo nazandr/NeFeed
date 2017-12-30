@@ -235,8 +235,7 @@ func signup(w http.ResponseWriter, req *http.Request) {
 			respondWithError(w, http.StatusBadRequest, "Can't generate token, try again")
 			return
 		}
-		w.Header().Set("token", signedToken)
-		w.WriteHeader(200)
+		respondWithJSON(w, 200, struct{ token string }{signedToken})
 	} else {
 		respondWithError(w, http.StatusBadRequest, "User already registered")
 	}
@@ -281,9 +280,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 		respondWithError(w, http.StatusBadRequest, "Can't generate token, try again")
 		return
 	}
-
-	w.Header().Set("token", signedToken)
-	w.WriteHeader(200)
+	respondWithJSON(w, 200, struct{ token string }{signedToken})
 }
 
 func rateLike(w http.ResponseWriter, req *http.Request) {
@@ -420,6 +417,7 @@ func feed(w http.ResponseWriter, req *http.Request) {
 		log.Println("json marshal: ", err)
 	}
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	// nPage = len(user.Feed) / 10
 	// w.Header().Set("npage", strconv.Itoa(nPage))
 	w.Write(response)
