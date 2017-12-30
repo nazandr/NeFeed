@@ -235,7 +235,7 @@ func signup(w http.ResponseWriter, req *http.Request) {
 			respondWithError(w, http.StatusBadRequest, "Can't generate token, try again")
 			return
 		}
-		respondWithJSON(w, 200, struct{ token string }{signedToken})
+		respondWithJSON(w, 200, signedToken)
 	} else {
 		respondWithError(w, http.StatusBadRequest, "User already registered")
 	}
@@ -280,7 +280,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 		respondWithError(w, http.StatusBadRequest, "Can't generate token, try again")
 		return
 	}
-	respondWithJSON(w, 200, struct{ token string }{signedToken})
+	respondWithJSON(w, 200, signedToken)
 }
 
 func rateLike(w http.ResponseWriter, req *http.Request) {
