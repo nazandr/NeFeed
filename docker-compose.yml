@@ -1,17 +1,15 @@
 version: '2'
 
 services:
-    caddy:
-        image: abiosoft/caddy
-        restart: always
-        volumes:
-            - ./caddy/Caddyfile:/etc/Caddyfile
-            - .caddy/ssl:/root/.caddy
-        plagins:
-            - http.cors
-        ports:
-            - "80:80"
-            - "443:443"
+    # caddy:
+    #     image: abiosoft/caddy
+    #     restart: always
+    #     volumes:
+    #         - ./caddy/Caddyfile:/etc/Caddyfile
+    #         - .caddy/ssl:/root/.caddy
+    #     ports:
+    #         - "80:80"
+    #         - "443:443"
 
     front-end:
         build:

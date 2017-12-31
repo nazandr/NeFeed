@@ -1,9 +1,7 @@
 www.nefeed.ga {
-    cors
     proxy / server:12345
 }
 
 nefeed.ga {
-    cors
     proxy / server:12345
 }

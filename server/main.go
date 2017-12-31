@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/rs/cors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -143,8 +143,11 @@ func main() {
 	router.HandleFunc("/todayfeed", restrictedHandler(toDayFeed)).Methods("GET")
 	router.HandleFunc("/account", restrictedHandler(accountData)).Methods("GET")
 	router.HandleFunc("/account/chenge/tags", restrictedHandler(accountTagsChange)).Methods("GET")
-	handler := cors.Default().Handler(router)
-	log.Fatal(http.ListenAndServe(":12345", handler))
+
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With"})
+	originsOk := handlers.AllowedOrigins([]string{"*"})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
+	log.Fatal(http.ListenAndServe(":12345", handlers.CORS(originsOk, headersOk, methodsOk)(router)))
 }
 
 // middleware to protect private pages
