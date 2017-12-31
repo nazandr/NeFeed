@@ -417,7 +417,6 @@ func feed(w http.ResponseWriter, req *http.Request) {
 		log.Println("json marshal: ", err)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	// nPage = len(user.Feed) / 10
 	// w.Header().Set("npage", strconv.Itoa(nPage))
 	w.Write(response)
