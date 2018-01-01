@@ -1,7 +1,7 @@
 www.nefeed.ga {
-    proxy / server:12345
+    proxy / http://server:12345
 }
 
 nefeed.ga {
-    proxy / server:12345
+    proxy / http://server:12345
 }
