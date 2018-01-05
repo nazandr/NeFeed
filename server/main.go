@@ -48,7 +48,7 @@ type Article struct {
 	Source    string        `bson:"source"`
 	Tags      []string      `bson:"tags"`
 	Text      string        `bson:"text"`
-	RawText   string        `bson:"rowText"`
+	RawText   string        `bson:"RowText"`
 	TextLen   int           `bson:"textLen"`
 	NumLinks  int           `bson:"numLinks"`
 	NumImg    int           `bson:"numImg"`
