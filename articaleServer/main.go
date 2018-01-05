@@ -244,7 +244,7 @@ func Parser(item Item) {
 	if err != nil {
 		log.Println("parser find err: ", err)
 	}
-	go forBatler(a.Id)
+	// go forBatler(a.Id)
 }
 
 // func searchDuplicates(text string, col *mgo.Collection) (shingle []uint32, duplicates []bson.ObjectId) {

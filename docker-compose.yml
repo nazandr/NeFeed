@@ -33,28 +33,7 @@ services:
         ports:
             - 8000:8000
         restart: always
-    butler1:
-        build:
-            context: ./butler
-        depends_on:
-            - "mongo"
-            - "rabbitmq"
-            - "article-server"
-    butler2:
-        build:
-            context: ./butler
-        depends_on:
-            - "mongo"
-            - "rabbitmq"
-            - "article-server"
-    butler3:
-        build:
-            context: ./butler
-        depends_on:
-            - "mongo"
-            - "rabbitmq"
-            - "article-server"
-        
+    
     server:
         build:
             context: ./server

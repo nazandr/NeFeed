@@ -48,7 +48,7 @@ type Article struct {
 	Source    string        `bson:"source"`
 	Tags      []string      `bson:"tags"`
 	Text      string        `bson:"text"`
-	RawText   string        `bson:"RowText"`
+	RawText   string        `bson:"rowText"`
 	TextLen   int           `bson:"textLen"`
 	NumLinks  int           `bson:"numLinks"`
 	NumImg    int           `bson:"numImg"`
@@ -347,19 +347,23 @@ func rateDislike(w http.ResponseWriter, req *http.Request) {
 
 func feed(w http.ResponseWriter, req *http.Request) {
 	tokenHeader := req.Header.Get("auth")
+
 	var (
-		user  User
-		f     []ArticleFeed
-		slice [2]int
-		// nPage int
+		user     User
+		f        []ArticleFeed
+		slice    [2]int
+		userFeed []Article
 	)
 
+	// connect to db
 	ds := NewDataStore()
 	defer ds.Close()
 	c := ds.C("Users")
 	ca := ds.C("Articles")
 
 	page := mux.Vars(req)
+
+	// take user data
 	token, _ := jwt.ParseWithClaims(tokenHeader, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return verifyKey, nil
 	})
@@ -373,6 +377,7 @@ func feed(w http.ResponseWriter, req *http.Request) {
 		log.Println(err)
 		respondWithError(w, http.StatusBadRequest, "Can't find this page")
 	}
+
 	if pageInt == 0 {
 		slice[0] = 0
 		slice[1] = 10
@@ -381,21 +386,16 @@ func feed(w http.ResponseWriter, req *http.Request) {
 		slice[1] = 10 + 10*(pageInt)
 	}
 
+	err = ca.Find(bson.M{"tags": bson.M{"$in": user.Tags}}).Sort("-timestamp").All(&userFeed)
+	reFeed := userFeed[slice[0]:slice[1]]
+
 	if len(user.Feed) < slice[1] {
 		slice[1] = len(user.Feed)
 	}
-	// revers feed ids
-	var reFeed []bson.ObjectId
-	for i := len(user.Feed) - 1; i >= 0; i-- {
-		reFeed = append(reFeed, user.Feed[i])
-	}
 	var checked []bson.ObjectId
-	for _, i := range user.LikeNews {
-		checked = append(checked, i)
-	}
-	for _, i := range user.DislikeNews {
-		checked = append(checked, i)
-	}
+	checked = append(checked, user.LikeNews...)
+	checked = append(checked, user.DislikeNews...)
+
 	for _, a := range reFeed[slice[0]:slice[1]] {
 		var article Article
 		err = ca.FindId(a).One(&article)
