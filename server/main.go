@@ -396,12 +396,7 @@ func feed(w http.ResponseWriter, req *http.Request) {
 	checked = append(checked, user.LikeNews...)
 	checked = append(checked, user.DislikeNews...)
 
-	for _, a := range reFeed[slice[0]:slice[1]] {
-		var article Article
-		err = ca.FindId(a).One(&article)
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Can't find any of article")
-		}
+	for _, article := range reFeed[slice[0]:slice[1]] {
 		ch := false
 		for _, i := range checked {
 			if i == article.Id {
