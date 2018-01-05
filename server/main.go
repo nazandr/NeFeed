@@ -140,6 +140,7 @@ func main() {
 	router.HandleFunc("/ratelike/{id}", restrictedHandler(rateLike)).Methods("POST")
 	router.HandleFunc("/ratedislike/{id}", restrictedHandler(rateDislike)).Methods("POST")
 	router.HandleFunc("/feed/{page:[0-9]+}", restrictedHandler(feed)).Methods("GET")
+	router.HandleFunc("/article/{id}", restrictedHandler(article)).Methods("GET")
 	router.HandleFunc("/todayfeed", restrictedHandler(toDayFeed)).Methods("GET")
 	router.HandleFunc("/account", restrictedHandler(accountData)).Methods("GET")
 	router.HandleFunc("/account/chenge/tags", restrictedHandler(accountTagsChange)).Methods("GET")
@@ -423,6 +424,33 @@ func feed(w http.ResponseWriter, req *http.Request) {
 	// nPage = len(user.Feed) / 10
 	// w.Header().Set("npage", strconv.Itoa(nPage))
 	w.Write(response)
+}
+
+func article(w http.ResponseWriter, req *http.Request) {
+	tokenHeader := req.Header.Get("auth")
+
+	ds := NewDataStore()
+	defer ds.Close()
+	c := ds.C("Users")
+	ca := ds.C("Articles")
+
+	id := mux.Vars(req)
+
+	token, _ := jwt.ParseWithClaims(tokenHeader, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		return verifyKey, nil
+	})
+	var user User
+	err := c.Find(bson.M{"email": token.Claims.(*Claims).Email}).One(&user)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Can't find user")
+		return
+	}
+	var art Article
+	err = ca.FindId(bson.ObjectIdHex(id["id"])).One(&art)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Can't find any of article")
+	}
+	respondWithJSON(w, http.StatusOK, art)
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {

@@ -4,3 +4,4 @@ data/
 server/keys/
 docker-compose.yml
 nginx/etc/ssl
+etc/
